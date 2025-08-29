@@ -13,15 +13,18 @@ export default function Home() {
   const [timerKey, setTimerKey] = useState(0);
   
   // Appearance settings
-  const [backgroundColor, setBackgroundColor] = useState('#1a1a1a');
+  const [backgroundColor, setBackgroundColor] = useState('#450606');
   const [textColor, setTextColor] = useState('#ffffff');
   
   // Audio settings
-  const [soundUrl, setSoundUrl] = useState('https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3');
-  const [beepInterval, setBeepInterval] = useState(60); // seconds
+  const [soundUrl, setSoundUrl] = useState('https://assets.mixkit.co/active_storage/sfx/2053/2053-preview.mp3'); // Harsh Buzzer
+  const [beepInterval, setBeepInterval] = useState(15); // seconds - more frequent beeping
   
   // Settings panel state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Auto restart feature
+  const [autoRestart, setAutoRestart] = useState(false);
   
   // Keep track of previous values to detect changes
   const prevTimerModeRef = useRef(timerMode);
@@ -54,11 +57,36 @@ export default function Home() {
   
   // Handle timer completion
   const handleTimerComplete = useCallback(() => {
-    setIsRunning(false);
-    const audio = new Audio(soundUrl);
-    audio.play().catch(e => console.error('Audio play error:', e));
-    // You could add more completion actions here
-  }, [soundUrl]);
+    // Play an extra annoying completion sound - repeat it 3 times
+    const playCompletionSound = (count = 0) => {
+      if (count >= 3) return;
+      
+      const audio = new Audio(soundUrl);
+      audio.volume = 1.0; // Full volume
+      audio.play()
+        .then(() => {
+          // After sound finishes, play again
+          audio.onended = () => setTimeout(() => playCompletionSound(count + 1), 300);
+        })
+        .catch(e => console.error('Audio play error:', e));
+    };
+    
+    playCompletionSound();
+    
+    // Handle auto-restart if enabled
+    if (autoRestart && timerMode === 'countdown') {
+      // Reset the timer by updating the key
+      setTimerKey(prev => prev + 1);
+      
+      // Brief timeout to ensure reset happens before starting again
+      setTimeout(() => {
+        setIsRunning(true);
+      }, 1500); // 1.5 second delay before restart
+    } else {
+      // Otherwise just stop the timer
+      setIsRunning(false);
+    }
+  }, [soundUrl, autoRestart, timerMode]);
   
   // Control buttons
   const handleStart = () => {
@@ -94,6 +122,7 @@ export default function Home() {
           beepInterval={beepInterval}
           isRunning={isRunning}
           onTimerComplete={handleTimerComplete}
+          autoRestart={autoRestart}
         />
         
         {/* Control buttons */}
@@ -143,6 +172,8 @@ export default function Home() {
           setSoundUrl={setSoundUrl}
           beepInterval={beepInterval}
           setBeepInterval={setBeepInterval}
+          autoRestart={autoRestart}
+          setAutoRestart={setAutoRestart}
           isOpen={isSettingsOpen}
           onClose={handleSettingsSave} // Use our custom handler that forces a re-render
         />
