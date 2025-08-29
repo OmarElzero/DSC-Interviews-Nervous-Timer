@@ -14,6 +14,11 @@ const Timer = ({
   const audioRef = useRef(null);
   const lastBeepTimeRef = useRef(0);
   
+  // Reset timer when timer mode or duration changes
+  useEffect(() => {
+    setTime(timerMode === 'countdown' ? duration * 60 : 0);
+  }, [timerMode, duration]);
+  
   // Format time to MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
