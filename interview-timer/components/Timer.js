@@ -8,7 +8,8 @@ const Timer = ({
   soundUrl, 
   beepInterval,
   isRunning, 
-  onTimerComplete
+  onTimerComplete,
+  autoRestart
 }) => {
   // Use a ref to track if this is the first render
   const firstRenderRef = useRef(true);
@@ -90,13 +91,27 @@ const Timer = ({
             
             // Check if we need to beep
             const newTime = prevTime - 1;
-            if (newTime > 0 && beepInterval > 0) {
-              const secondsElapsed = duration * 60 - newTime;
-              if (secondsElapsed % beepInterval === 0 && secondsElapsed !== lastBeepTimeRef.current) {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = 0;
-                  audioRef.current.play().catch(e => console.error('Audio play error:', e));
-                  lastBeepTimeRef.current = secondsElapsed;
+            if (newTime > 0) {
+              // Special case for final minute beeping
+              if (beepInterval === -1) {
+                // If in the final minute (60 seconds or less remaining)
+                if (newTime <= 60 && newTime % 10 === 0 && newTime !== lastBeepTimeRef.current) {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(e => console.error('Audio play error:', e));
+                    lastBeepTimeRef.current = newTime;
+                  }
+                }
+              } 
+              // Regular interval beeping
+              else if (beepInterval > 0) {
+                const secondsElapsed = duration * 60 - newTime;
+                if (secondsElapsed % beepInterval === 0 && secondsElapsed !== lastBeepTimeRef.current) {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(e => console.error('Audio play error:', e));
+                    lastBeepTimeRef.current = secondsElapsed;
+                  }
                 }
               }
             }
@@ -162,6 +177,11 @@ const Timer = ({
       </div>
       <div className="mt-4 text-xl" style={{ color: textColor }}>
         Mode: {timerMode === 'countdown' ? 'Countdown' : 'Stopwatch'}
+        {timerMode === 'countdown' && autoRestart && (
+          <span className="ml-4 bg-red-600 text-white px-2 py-1 rounded-md text-sm">
+            Auto-Restart ON
+          </span>
+        )}
       </div>
     </div>
   );
