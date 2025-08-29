@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import Timer from '../components/Timer';
 import Settings from '../components/Settings';
@@ -8,6 +8,9 @@ export default function Home() {
   const [isRunning, setIsRunning] = useState(false);
   const [timerMode, setTimerMode] = useState('countdown'); // 'countdown' or 'stopwatch'
   const [duration, setDuration] = useState(30); // minutes
+  
+  // Use a key to force Timer component re-render when needed
+  const [timerKey, setTimerKey] = useState(0);
   
   // Appearance settings
   const [backgroundColor, setBackgroundColor] = useState('#1a1a1a');
@@ -20,11 +23,40 @@ export default function Home() {
   // Settings panel state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
+  // Keep track of previous values to detect changes
+  const prevTimerModeRef = useRef(timerMode);
+  const prevDurationRef = useRef(duration);
+  
+  // Force re-render when important settings change
+  useEffect(() => {
+    const modeChanged = prevTimerModeRef.current !== timerMode;
+    const durationChanged = prevDurationRef.current !== duration;
+    
+    if (modeChanged || durationChanged) {
+      setIsRunning(false); // Stop the timer on mode/duration change
+      setTimerKey(prev => prev + 1); // Force Timer component to re-render
+      
+      // Update refs with new values
+      prevTimerModeRef.current = timerMode;
+      prevDurationRef.current = duration;
+      
+      console.log(`Settings changed - Mode: ${timerMode}, Duration: ${duration}`);
+    }
+  }, [timerMode, duration]);
+  
+  // Handle settings close with save
+  const handleSettingsSave = useCallback(() => {
+    setIsSettingsOpen(false);
+    
+    // Force Timer component to re-render after settings change
+    setTimerKey(prev => prev + 1);
+  }, []);
+  
   // Handle timer completion
   const handleTimerComplete = useCallback(() => {
     setIsRunning(false);
     const audio = new Audio(soundUrl);
-    audio.play();
+    audio.play().catch(e => console.error('Audio play error:', e));
     // You could add more completion actions here
   }, [soundUrl]);
   
@@ -39,7 +71,8 @@ export default function Home() {
   
   const handleReset = () => {
     setIsRunning(false);
-    // The Timer component will reset its internal state based on props
+    // Force re-render of Timer component to reset the state
+    setTimerKey(prev => prev + 1);
   };
   
   return (
@@ -52,6 +85,7 @@ export default function Home() {
       
       <main>
         <Timer
+          key={timerKey} // This key forces re-render when needed
           timerMode={timerMode}
           duration={duration}
           backgroundColor={backgroundColor}
@@ -110,7 +144,7 @@ export default function Home() {
           beepInterval={beepInterval}
           setBeepInterval={setBeepInterval}
           isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
+          onClose={handleSettingsSave} // Use our custom handler that forces a re-render
         />
       </main>
     </div>
