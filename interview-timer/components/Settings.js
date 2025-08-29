@@ -14,6 +14,8 @@ const Settings = ({
   setSoundUrl, 
   beepInterval, 
   setBeepInterval,
+  autoRestart,
+  setAutoRestart,
   isOpen,
   onClose 
 }) => {
@@ -21,15 +23,20 @@ const Settings = ({
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   
   const audioOptions = [
-    { name: 'Standard Beep', url: 'https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3' },
-    { name: 'Bell Sound', url: 'https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3' },
-    { name: 'Digital Alarm', url: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' }
+    { name: 'Annoying Alarm', url: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' },
+    { name: 'Harsh Buzzer', url: 'https://assets.mixkit.co/active_storage/sfx/2053/2053-preview.mp3' },
+    { name: 'Error Alert', url: 'https://assets.mixkit.co/active_storage/sfx/1021/1021-preview.mp3' },
+    { name: 'Screeching Sound', url: 'https://assets.mixkit.co/active_storage/sfx/2170/2170-preview.mp3' },
+    { name: 'Police Siren', url: 'https://assets.mixkit.co/active_storage/sfx/1640/1640-preview.mp3' }
   ];
   
   const beepIntervalOptions = [
+    { label: 'Every 5 seconds (Very Annoying)', value: 5 },
+    { label: 'Every 10 seconds (Annoying)', value: 10 },
     { label: 'Every 15 seconds', value: 15 },
     { label: 'Every 30 seconds', value: 30 },
     { label: 'Every 1 minute', value: 60 },
+    { label: 'Final minute only', value: -1 }, // Special value for final minute
   ];
   
   if (!isOpen) return null;
@@ -70,6 +77,24 @@ const Settings = ({
               onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full p-2 border rounded-md"
             />
+          </div>
+        )}
+        
+        {/* Auto Restart (for countdown) */}
+        {timerMode === 'countdown' && (
+          <div className="mb-4">
+            <div className="flex items-center">
+              <input 
+                type="checkbox" 
+                id="autoRestart"
+                checked={autoRestart}
+                onChange={(e) => setAutoRestart(e.target.checked)}
+                className="mr-2 h-4 w-4"
+              />
+              <label htmlFor="autoRestart" className="text-sm font-medium">
+                Auto Restart (Timer will automatically restart after countdown completes)
+              </label>
+            </div>
           </div>
         )}
         
